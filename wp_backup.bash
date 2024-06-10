@@ -9,11 +9,13 @@
 # - Add time token in the temp folder to prevent issue if running concurrent
 # - Error if wp-config.php does not exist in wp_path
 # - Make sure dot files are also backed up
+# - Add an optional command line arg to specify the name of the backup file (keeping the date token)
 
 # Set default paths
 WP_PATH=${1:-$(pwd)}
 BACKUP_PATH=$(pwd)
-BACKUP_FILE="wordpress_backup_$(date +%F).zip"
+BACKUP_NAME=${2:-wordpress_backup}
+BACKUP_FILE="${BACKUP_NAME}_$(date +%F).zip"
 TEMP_PATH="/tmp/wordpress_backup_$(date +%s)"
 
 # Check if wp-config.php exists
