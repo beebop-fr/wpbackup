@@ -10,6 +10,24 @@
 # - Error if wp-config.php does not exist in wp_path
 # - Make sure dot files are also backed up
 # - Add an optional command line arg to specify the name of the backup file (keeping the date token)
+# - Add a help message if the wrong number of arguments is provided
+
+# Function to display help message
+display_help() {
+  echo "Usage: $0 [WP_PATH] [BACKUP_NAME]"
+  echo
+  echo "WP_PATH      Path to the WordPress installation. Defaults to the current directory."
+  echo "BACKUP_NAME  Optional name for the backup file (without date and .zip extension)."
+  echo
+  echo "Example:"
+  echo "  $0 /path/to/wordpress my_backup"
+}
+
+# Check for help option or no arguments
+if [[ $1 == "--help" ]] || [[ $# -eq 0 ]]; then
+  display_help
+  exit 0
+fi
 
 # Set default paths
 WP_PATH=${1:-$(pwd)}
