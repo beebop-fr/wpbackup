@@ -11,6 +11,7 @@
 # - Make sure dot files are also backed up
 # - Add an optional command line arg to specify the name of the backup file (keeping the date token)
 # - Add a help message if the wrong number of arguments is provided
+# - In the backup subdirectories files, also add the .htaccess file from the backed up wordpress directory
 
 # Function to display help message
 display_help() {
@@ -59,12 +60,18 @@ mkdir -p $TEMP_PATH/files
 shopt -s dotglob
 cp -r $WP_PATH/wp-content $TEMP_PATH/files/
 
-# Step 3: Create a zip archive containing the backup.sql and files folder
+# Step 3: Copy the .htaccess file to the temporary location if it exists
+if [ -f "$WP_PATH/.htaccess" ]; then
+  echo "Copying .htaccess file..."
+  cp $WP_PATH/.htaccess $TEMP_PATH/files/
+fi
+
+# Step 4: Create a zip archive containing the backup.sql and files folder
 echo "Creating zip archive..."
 cd $TEMP_PATH
 zip -r $BACKUP_PATH/$BACKUP_FILE backup.sql files/
 
-# Step 4: Clean up temporary files
+# Step 5: Clean up temporary files
 echo "Cleaning up temporary files..."
 rm -rf $TEMP_PATH
 
