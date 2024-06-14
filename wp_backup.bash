@@ -12,16 +12,18 @@
 # - Add an optional command line arg to specify the name of the backup file (keeping the date token)
 # - Add a help message if the wrong number of arguments is provided
 # - In the backup subdirectories files, also add the .htaccess file from the backed up wordpress directory
+# - Add an option to backup all the existing files from wp directory, not only wp-content and .htaccess
 
 # Function to display help message
 display_help() {
-  echo "Usage: $0 [WP_PATH] [BACKUP_NAME]"
+  echo "Usage: $0 [WP_PATH] [BACKUP_NAME] [--all]"
   echo
   echo "WP_PATH      Path to the WordPress installation. Defaults to the current directory."
   echo "BACKUP_NAME  Optional name for the backup file (without date and .zip extension)."
+  echo "--all        Backup all files in the WordPress directory, not just wp-content and .htaccess."
   echo
   echo "Example:"
-  echo "  $0 /path/to/wordpress my_backup"
+  echo "  $0 /path/to/wordpress my_backup --all"
 }
 
 # Check for help option or no arguments
@@ -34,6 +36,10 @@ fi
 WP_PATH=${1:-$(pwd)}
 BACKUP_PATH=$(pwd)
 BACKUP_NAME=${2:-wordpress_backup}
+BACKUP_ALL=false
+if [[ $3 == "--all" ]]; then
+  BACKUP_ALL=true
+fi
 BACKUP_FILE="${BACKUP_NAME}_$(date +%F).zip"
 TEMP_PATH="/tmp/wordpress_backup_$(date +%s)"
 
@@ -54,24 +60,27 @@ echo "Creating database dump..."
 mkdir -p $TEMP_PATH
 mysqldump -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME > $TEMP_PATH/backup.sql
 
-# Step 2: Copy the wp-content folder to the temporary location, including dot files
-echo "Copying wp-content folder..."
+# Step 2: Copy files to the temporary location
+echo "Copying files..."
 mkdir -p $TEMP_PATH/files
-shopt -s dotglob
-cp -r $WP_PATH/wp-content $TEMP_PATH/files/
 
-# Step 3: Copy the .htaccess file to the temporary location if it exists
-if [ -f "$WP_PATH/.htaccess" ]; then
-  echo "Copying .htaccess file..."
-  cp $WP_PATH/.htaccess $TEMP_PATH/files/
+if [ "$BACKUP_ALL" = true ]; then
+  cp -r $WP_PATH/* $TEMP_PATH/files/
+  cp -r $WP_PATH/.* $TEMP_PATH/files/ 2>/dev/null || :
+else
+  shopt -s dotglob
+  cp -r $WP_PATH/wp-content $TEMP_PATH/files/
+  if [ -f "$WP_PATH/.htaccess" ]; then
+    cp $WP_PATH/.htaccess $TEMP_PATH/files/
+  fi
 fi
 
-# Step 4: Create a zip archive containing the backup.sql and files folder
+# Step 3: Create a zip archive containing the backup.sql and files folder
 echo "Creating zip archive..."
 cd $TEMP_PATH
 zip -r $BACKUP_PATH/$BACKUP_FILE backup.sql files/
 
-# Step 5: Clean up temporary files
+# Step 4: Clean up temporary files
 echo "Cleaning up temporary files..."
 rm -rf $TEMP_PATH
 
